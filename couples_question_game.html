@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Couples Question Game</title>
+<style>
+body {
+font-family: Arial, sans-serif;
+background: linear-gradient(135deg,#ff9a9e,#fad0c4);
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+margin:0;
+}
+
+.container {
+background:white;
+padding:30px;
+border-radius:15px;
+box-shadow:0 10px 30px rgba(0,0,0,0.2);
+max-width:500px;
+text-align:center;
+}
+
+button {
+padding:10px 18px;
+margin:6px;
+border:none;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+background:#ff6b81;
+color:white;
+}
+
+button:hover {
+opacity:0.9;
+}
+
+input {
+padding:10px;
+margin:6px;
+border-radius:8px;
+border:1px solid #ccc;
+width:40%;
+}
+
+.question {
+font-size:20px;
+margin:20px 0;
+min-height:80px;
+}
+
+.turn {
+font-weight:bold;
+margin-bottom:10px;
+}
+</style>
+</head>
+<body>
+
+<div class="container" id="setup">
+<h2>Couples Question Game</h2>
+<p>Enter your names to start</p>
+<input id="name1" placeholder="Name 1">
+<input id="name2" placeholder="Name 2"><br>
+<button onclick="startGame()">Start</button>
+</div>
+
+<div class="container" id="game" style="display:none;">
+<div class="turn" id="turn"></div>
+<div class="question" id="question"></div>
+
+<button onclick="speak()">🔊 Speak</button>
+<button onclick="done()">Done</button>
+<button onclick="skip()">Skip</button>
+</div>
+
+<script>
+let name1, name2;
+let current = 0;
+let turn = 0;
+
+const questions = ["1. What's something small I do that makes you feel loved?", "2. What's one memory of us that always makes you smile?", "3. What's something new you'd like us to try together this year?", '4. If we could live anywhere for a year, where would it be?', "5. What's something you admire about me that you don't say often?", '6. What’s a habit of mine you secretly find cute?', '7. What’s something you want us to accomplish together?', "8. What’s your favorite trip we've taken together?", '9. What’s one thing you think we do better than most couples?', '10. What’s something that always relaxes you when we do it together?', "11. What's one way I could support you better right now?", '12. What’s your favorite thing about our daily routine together?', '13. What song reminds you of our relationship?', '14. What’s something that instantly improves your mood?', '15. What’s a dream you have for the future?', '16. What’s something we should do more often together?', '17. What’s a place you want to visit with me?', '18. What’s your favorite physical feature of mine?', '19. What’s a personality trait of mine you love?', '20. What makes you feel closest to me?', "21. What's something small I do that makes you feel loved?", "22. What's one memory of us that always makes you smile?", "23. What's something new you'd like us to try together this year?", '24. If we could live anywhere for a year, where would it be?', "25. What's something you admire about me that you don't say often?", '26. What’s a habit of mine you secretly find cute?', '27. What’s something you want us to accomplish together?', "28. What’s your favorite trip we've taken together?", '29. What’s one thing you think we do better than most couples?', '30. What’s something that always relaxes you when we do it together?', "31. What's one way I could support you better right now?", '32. What’s your favorite thing about our daily routine together?', '33. What song reminds you of our relationship?', '34. What’s something that instantly improves your mood?', '35. What’s a dream you have for the future?', '36. What’s something we should do more often together?', '37. What’s a place you want to visit with me?', '38. What’s your favorite physical feature of mine?', '39. What’s a personality trait of mine you love?', '40. What makes you feel closest to me?', "41. What's something small I do that makes you feel loved?", "42. What's one memory of us that always makes you smile?", "43. What's something new you'd like us to try together this year?", '44. If we could live anywhere for a year, where would it be?', "45. What's something you admire about me that you don't say often?", '46. What’s a habit of mine you secretly find cute?', '47. What’s something you want us to accomplish together?', "48. What’s your favorite trip we've taken together?", '49. What’s one thing you think we do better than most couples?', '50. What’s something that always relaxes you when we do it together?', "51. What's one way I could support you better right now?", '52. What’s your favorite thing about our daily routine together?', '53. What song reminds you of our relationship?', '54. What’s something that instantly improves your mood?', '55. What’s a dream you have for the future?', '56. What’s something we should do more often together?', '57. What’s a place you want to visit with me?', '58. What’s your favorite physical feature of mine?', '59. What’s a personality trait of mine you love?', '60. What makes you feel closest to me?', "61. What's something small I do that makes you feel loved?", "62. What's one memory of us that always makes you smile?", "63. What's something new you'd like us to try together this year?", '64. If we could live anywhere for a year, where would it be?', "65. What's something you admire about me that you don't say often?", '66. What’s a habit of mine you secretly find cute?', '67. What’s something you want us to accomplish together?', "68. What’s your favorite trip we've taken together?", '69. What’s one thing you think we do better than most couples?', '70. What’s something that always relaxes you when we do it together?', "71. What's one way I could support you better right now?", '72. What’s your favorite thing about our daily routine together?', '73. What song reminds you of our relationship?', '74. What’s something that instantly improves your mood?', '75. What’s a dream you have for the future?', '76. What’s something we should do more often together?', '77. What’s a place you want to visit with me?', '78. What’s your favorite physical feature of mine?', '79. What’s a personality trait of mine you love?', '80. What makes you feel closest to me?', "81. What's something small I do that makes you feel loved?", "82. What's one memory of us that always makes you smile?", "83. What's something new you'd like us to try together this year?", '84. If we could live anywhere for a year, where would it be?', "85. What's something you admire about me that you don't say often?", '86. What’s a habit of mine you secretly find cute?', '87. What’s something you want us to accomplish together?', "88. What’s your favorite trip we've taken together?", '89. What’s one thing you think we do better than most couples?', '90. What’s something that always relaxes you when we do it together?', "91. What's one way I could support you better right now?", '92. What’s your favorite thing about our daily routine together?', '93. What song reminds you of our relationship?', '94. What’s something that instantly improves your mood?', '95. What’s a dream you have for the future?', '96. What’s something we should do more often together?', '97. What’s a place you want to visit with me?', '98. What’s your favorite physical feature of mine?', '99. What’s a personality trait of mine you love?', '100. What makes you feel closest to me?', "101. What's something small I do that makes you feel loved?", "102. What's one memory of us that always makes you smile?", "103. What's something new you'd like us to try together this year?", '104. If we could live anywhere for a year, where would it be?', "105. What's something you admire about me that you don't say often?", '106. What’s a habit of mine you secretly find cute?', '107. What’s something you want us to accomplish together?', "108. What’s your favorite trip we've taken together?", '109. What’s one thing you think we do better than most couples?', '110. What’s something that always relaxes you when we do it together?', "111. What's one way I could support you better right now?", '112. What’s your favorite thing about our daily routine together?', '113. What song reminds you of our relationship?', '114. What’s something that instantly improves your mood?', '115. What’s a dream you have for the future?', '116. What’s something we should do more often together?', '117. What’s a place you want to visit with me?', '118. What’s your favorite physical feature of mine?', '119. What’s a personality trait of mine you love?', '120. What makes you feel closest to me?', "121. What's something small I do that makes you feel loved?", "122. What's one memory of us that always makes you smile?", "123. What's something new you'd like us to try together this year?", '124. If we could live anywhere for a year, where would it be?', "125. What's something you admire about me that you don't say often?", '126. What’s a habit of mine you secretly find cute?', '127. What’s something you want us to accomplish together?', "128. What’s your favorite trip we've taken together?", '129. What’s one thing you think we do better than most couples?', '130. What’s something that always relaxes you when we do it together?', "131. What's one way I could support you better right now?", '132. What’s your favorite thing about our daily routine together?', '133. What song reminds you of our relationship?', '134. What’s something that instantly improves your mood?', '135. What’s a dream you have for the future?', '136. What’s something we should do more often together?', '137. What’s a place you want to visit with me?', '138. What’s your favorite physical feature of mine?', '139. What’s a personality trait of mine you love?', '140. What makes you feel closest to me?', "141. What's something small I do that makes you feel loved?", "142. What's one memory of us that always makes you smile?", "143. What's something new you'd like us to try together this year?", '144. If we could live anywhere for a year, where would it be?', "145. What's something you admire about me that you don't say often?", '146. What’s a habit of mine you secretly find cute?', '147. What’s something you want us to accomplish together?', "148. What’s your favorite trip we've taken together?", '149. What’s one thing you think we do better than most couples?', '150. What’s something that always relaxes you when we do it together?'];
+
+function startGame() {
+name1 = document.getElementById("name1").value || "Player 1";
+name2 = document.getElementById("name2").value || "Player 2";
+document.getElementById("setup").style.display="none";
+document.getElementById("game").style.display="block";
+update();
+}
+
+function update() {
+let player = turn % 2 === 0 ? name1 : name2;
+document.getElementById("turn").innerText = player + "'s turn";
+document.getElementById("question").innerText = questions[current];
+}
+
+function done() {
+turn++;
+update();
+}
+
+function skip() {
+current = (current + 1) % questions.length;
+turn++;
+update();
+}
+
+function speak() {
+let text = document.getElementById("question").innerText;
+let utter = new SpeechSynthesisUtterance(text);
+speechSynthesis.speak(utter);
+}
+</script>
+
+</body>
+</html>

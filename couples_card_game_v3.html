@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Couples Card Game V3</title>
+  <style>
+    :root { --bg1:#fff2f6; --bg2:#ffdfe8; --card:rgba(255,255,255,.84); --card-solid:#fffafc; --text:#36252d; --muted:#7d6971; --accent:#ff5f88; --accent-dark:#e14973; --border:rgba(255,255,255,.6); --shadow:0 20px 50px rgba(112,45,68,.18); }
+    * { box-sizing:border-box; }
+    html,body { margin:0; min-height:100%; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--text); background:radial-gradient(circle at top left,#fff9fb 0%,transparent 34%),radial-gradient(circle at bottom right,#ffd5e1 0%,transparent 30%),linear-gradient(145deg,var(--bg1),var(--bg2)); overscroll-behavior:none; }
+    body { padding:16px; display:flex; justify-content:center; align-items:center; }
+    .app { width:100%; max-width:560px; min-height:calc(100vh - 32px); }
+    .screen { display:none; min-height:calc(100vh - 32px); align-items:center; justify-content:center; }
+    .screen.active { display:flex; }
+    .panel { width:100%; background:var(--card); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:32px; box-shadow:var(--shadow); padding:24px; }
+    .title { font-size:2rem; font-weight:800; margin:0 0 10px; text-align:center; letter-spacing:-.03em; }
+    .sub { color:var(--muted); text-align:center; line-height:1.45; margin:0 0 22px; }
+    .field { margin-bottom:14px; }
+    label { display:block; font-size:.95rem; font-weight:700; margin-bottom:8px; }
+    input { width:100%; border:1px solid rgba(95,59,73,.14); background:rgba(255,255,255,.96); border-radius:16px; padding:14px 15px; font-size:1rem; color:var(--text); outline:none; }
+    input:focus { border-color:rgba(255,95,136,.4); box-shadow:0 0 0 4px rgba(255,95,136,.12); }
+    .hint { color:var(--muted); font-size:.9rem; line-height:1.4; margin-top:8px; }
+    .btn { appearance:none; border:none; border-radius:16px; padding:14px 18px; font-size:1rem; font-weight:800; cursor:pointer; transition:transform .14s ease,opacity .14s ease; }
+    .btn:active { transform:scale(.985); }
+    .btn-primary { width:100%; color:white; background:linear-gradient(180deg,var(--accent),var(--accent-dark)); box-shadow:0 10px 24px rgba(225,73,115,.28); }
+    .btn-secondary { background:rgba(255,255,255,.95); color:var(--text); border:1px solid rgba(95,59,73,.12); }
+    .btn-danger { background:#fff2f5; color:#c63b64; border:1px solid rgba(198,59,100,.14); }
+    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+    .brand { font-size:1.04rem; font-weight:800; letter-spacing:.01em; }
+    .icon-btn { width:44px; height:44px; border:none; border-radius:14px; background:rgba(255,255,255,.82); font-size:1.2rem; display:grid; place-items:center; cursor:pointer; box-shadow:0 8px 18px rgba(80,40,55,.08); }
+    .card { min-height:500px; position:relative; background:linear-gradient(180deg,rgba(255,255,255,.98),var(--card-solid)); border:1px solid rgba(255,255,255,.92); border-radius:30px; box-shadow:0 18px 40px rgba(99,40,60,.14); padding:22px 20px 18px; overflow:hidden; user-select:none; touch-action:pan-y; transition:transform .2s ease, box-shadow .2s ease; }
+    .card::after { content:""; position:absolute; right:-70px; bottom:-70px; width:180px; height:180px; background:radial-gradient(circle,rgba(255,95,136,.13),transparent 68%); pointer-events:none; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .pill { display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:9px 13px; font-size:.92rem; font-weight:800; background:rgba(255,255,255,.75); border:1px solid rgba(95,59,73,.09); }
+    .pill.ask { color:#b1405f; background:rgba(255,95,136,.1); }
+    .pill.quiz { color:#7f57cc; background:rgba(127,87,204,.12); }
+    .turn { color:#b22d59; background:rgba(255,95,136,.1); }
+    .completed { color:#158b51; background:rgba(30,168,102,.11); display:none; }
+    .clarifier { color:var(--muted); line-height:1.45; font-size:.98rem; margin-bottom:18px; }
+    .question { font-size:1.68rem; line-height:1.3; font-weight:800; letter-spacing:-.025em; margin:24px 0 28px; }
+    .actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .swipe-hint { text-align:center; color:var(--muted); font-size:.88rem; line-height:1.45; margin-top:14px; }
+    .overlay { position:fixed; inset:0; background:rgba(38,17,26,.35); display:none; align-items:center; justify-content:center; padding:16px; z-index:20; }
+    .overlay.open { display:flex; }
+    .modal { width:100%; max-width:460px; border-radius:26px; background:rgba(255,255,255,.97); box-shadow:0 24px 60px rgba(28,12,20,.25); padding:22px; }
+    .modal h3 { margin:0 0 8px; font-size:1.35rem; }
+    .modal p { color:var(--muted); line-height:1.45; margin:0 0 16px; }
+    .stack { display:grid; gap:12px; }
+    .tiny { color:var(--muted); font-size:.82rem; line-height:1.4; margin-top:8px; }
+    @media (max-width:480px) { body { padding:12px; } .app,.screen { min-height:calc(100vh - 24px); } .panel { padding:18px; border-radius:24px; } .card { min-height:520px; padding:20px 18px 18px; } .question { font-size:1.45rem; } .actions { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section id="setupScreen" class="screen active">
+      <div class="panel">
+        <h1 class="title">Couples Card Game</h1>
+        <p class="sub">This deck automatically mixes regular questions you answer yourself and pop quiz cards where you answer what you think your partner would say.</p>
+        <div class="field"><label for="name1">Person 1</label><input id="name1" type="text" maxlength="30" placeholder="Enter name" /></div>
+        <div class="field"><label for="name2">Person 2</label><input id="name2" type="text" maxlength="30" placeholder="Enter name" /></div>
+        <button class="btn btn-primary" id="startBtn">Start Game</button>
+        <div class="hint">The answerer always alternates every card. Swipe right for next card. Swipe left to go backward through completed cards.</div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <div class="panel">
+        <div class="topbar">
+          <div class="brand">Couples Card Game V3</div>
+          <button class="icon-btn" id="settingsBtn" aria-label="Settings">⚙️</button>
+        </div>
+
+        <div class="card" id="card">
+          <div class="row">
+            <div class="pill" id="typePill">Question</div>
+            <div class="pill turn" id="turnPill">Person 1 is answering</div>
+          </div>
+          <div class="row" style="justify-content:flex-start; margin-top:-2px; margin-bottom:10px;">
+            <div class="pill completed" id="completedPill">✅ Completed card</div>
+          </div>
+          <div class="clarifier" id="clarifier"></div>
+          <div class="question" id="questionText"></div>
+          <div class="actions">
+            <button class="btn btn-secondary" id="speakBtn">🔊 Speak</button>
+            <button class="btn btn-primary" id="doneBtn">Done → Next Card</button>
+          </div>
+          <div class="swipe-hint">Swipe right for next card. Swipe left for previous completed card. Arrow keys work too.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="overlay" id="settingsOverlay">
+    <div class="modal">
+      <h3>Settings</h3>
+      <p>Change names or wipe everything and start over.</p>
+      <div class="field"><label for="settingsName1">Person 1</label><input id="settingsName1" type="text" maxlength="30" /></div>
+      <div class="field"><label for="settingsName2">Person 2</label><input id="settingsName2" type="text" maxlength="30" /></div>
+      <div class="stack">
+        <button class="btn btn-primary" id="saveNamesBtn">Save Names</button>
+        <button class="btn btn-secondary" id="closeSettingsBtn">Close</button>
+        <button class="btn btn-danger" id="resetBtn">Blank Slate Reset App</button>
+      </div>
+      <div class="tiny">Reset clears saved names, completed card history, deck order, and current place.</div>
+    </div>
+  </div>
+
+  <script>
+    const MASTER_CARDS = [{"type": "ask", "q": "What’s something small your partner does that makes you feel loved?"}, {"type": "ask", "q": "What memory of your relationship makes you smile every time?"}, {"type": "ask", "q": "What’s one new thing you’d love to try together this year?"}, {"type": "ask", "q": "What’s a place you’d love to visit together someday?"}, {"type": "ask", "q": "What’s one thing your partner does better than most people?"}, {"type": "ask", "q": "What habit of your partner do you secretly find adorable?"}, {"type": "ask", "q": "What is one thing you want to accomplish together as a couple?"}, {"type": "ask", "q": "What trip or date stands out as one of your favorites?"}, {"type": "ask", "q": "What helps you feel closest to your partner?"}, {"type": "ask", "q": "What part of your routine together do you appreciate most?"}, {"type": "ask", "q": "What song feels tied to your relationship?"}, {"type": "ask", "q": "What instantly lifts your mood when your partner does it?"}, {"type": "ask", "q": "What dream do you hope you both build toward together?"}, {"type": "ask", "q": "What should you two do more often together?"}, {"type": "ask", "q": "What physical feature of your partner do you love most?"}, {"type": "ask", "q": "What personality trait of your partner makes you feel lucky?"}, {"type": "ask", "q": "When do you feel most understood by your partner?"}, {"type": "ask", "q": "What is one thing your partner could do that would help you feel more supported right now?"}, {"type": "ask", "q": "What kind of date night feels most like you two?"}, {"type": "ask", "q": "What’s one way your relationship has made you grow?"}, {"type": "ask", "q": "What do you think your partner worries about more than they admit?"}, {"type": "ask", "q": "What is a strength your partner has that deserves more credit?"}, {"type": "ask", "q": "What’s something you hope never changes about your relationship?"}, {"type": "ask", "q": "What’s one area where your relationship could get stronger?"}, {"type": "ask", "q": "What does being a great partner look like to you?"}, {"type": "ask", "q": "What’s a challenge you think you two have handled well together?"}, {"type": "ask", "q": "What is one compliment you wish your partner heard more often?"}, {"type": "ask", "q": "What’s a little thing that makes you feel emotionally safe with your partner?"}, {"type": "ask", "q": "What would your ideal weekend together look like?"}, {"type": "ask", "q": "What conversation do you think you two should have more often?"}, {"type": "ask", "q": "What makes you feel most attractive in this relationship?"}, {"type": "ask", "q": "What’s one thing your partner does that makes you laugh every time?"}, {"type": "ask", "q": "What makes you feel appreciated by your partner?"}, {"type": "ask", "q": "What is one thing you admire about the way your partner handles life?"}, {"type": "ask", "q": "What does romance look like to you right now?"}, {"type": "ask", "q": "What kind of affection means the most to you?"}, {"type": "ask", "q": "What’s one thing you want more of in your relationship?"}, {"type": "ask", "q": "What’s one thing you think your partner gets right about loving you?"}, {"type": "ask", "q": "What’s one place or moment where you felt deeply connected?"}, {"type": "ask", "q": "What kind of reassurance matters most to you?"}, {"type": "ask", "q": "What is one shared goal that excites you?"}, {"type": "ask", "q": "What’s a moment when your partner really showed up for you?"}, {"type": "ask", "q": "What helps you feel emotionally connected before physical intimacy?"}, {"type": "ask", "q": "What kind of touch makes you feel closest to your partner?"}, {"type": "ask", "q": "What makes intimacy feel playful and fun for you?"}, {"type": "ask", "q": "What helps you relax and be fully present with your partner?"}, {"type": "ask", "q": "What type of nonsexual affection means a lot to you?"}, {"type": "ask", "q": "What makes you feel most desired by your partner?"}, {"type": "ask", "q": "What makes flirting fun between the two of you?"}, {"type": "ask", "q": "What is something your partner does that makes you feel wanted?"}, {"type": "ask", "q": "What kind of setting feels most romantic to you?"}, {"type": "ask", "q": "What helps create emotional closeness after intimacy?"}, {"type": "ask", "q": "What’s one thing you enjoy that your partner might not realize you enjoy so much?"}, {"type": "ask", "q": "What makes you feel more confident in intimate moments?"}, {"type": "ask", "q": "What kind of words make you feel sexy or wanted?"}, {"type": "ask", "q": "What kind of initiation feels best to you?"}, {"type": "ask", "q": "What helps you feel safe enough to be honest about desire?"}, {"type": "ask", "q": "What makes an intimate moment memorable for you?"}, {"type": "ask", "q": "What would you like more of when it comes to affection?"}, {"type": "ask", "q": "What does feeling fully desired look like for you?"}, {"type": "ask", "q": "What’s something tender your partner does that you never want them to stop doing?"}, {"type": "ask", "q": "What does emotional chemistry feel like to you?"}, {"type": "ask", "q": "What kind of future do you want to build together?"}, {"type": "ask", "q": "What do you want your relationship to feel like one year from now?"}, {"type": "ask", "q": "What would make the next six months especially meaningful for you as a couple?"}, {"type": "ask", "q": "What is one tradition you’d love to create together?"}, {"type": "ask", "q": "What does a peaceful home life look like to you?"}, {"type": "ask", "q": "What kind of support do you hope your relationship always has?"}, {"type": "ask", "q": "What’s one financial or life goal you’d love to tackle together?"}, {"type": "ask", "q": "What would make you feel proud of your relationship in the future?"}, {"type": "ask", "q": "What kind of memories do you most want to create together?"}, {"type": "ask", "q": "What’s one risk or leap you’d love to take together someday?"}, {"type": "ask", "q": "What does long-term happiness look like in a relationship?"}, {"type": "ask", "q": "What kind of partnership do you want to become over time?"}, {"type": "ask", "q": "What do you hope deepens as the years go on?"}, {"type": "ask", "q": "What shared habit would strengthen your connection over time?"}, {"type": "ask", "q": "What do you want your partner to always know about your commitment?"}, {"type": "ask", "q": "What’s one thing your partner does that deserves more praise?"}, {"type": "ask", "q": "What makes your relationship worth protecting?"}, {"type": "ask", "q": "What quality in your partner gives you peace?"}, {"type": "ask", "q": "What’s one way your partner makes ordinary life better?"}, {"type": "ask", "q": "What kind of compliment lands the deepest with you?"}, {"type": "ask", "q": "What’s something you’ve been meaning to say thank you for?"}, {"type": "ask", "q": "What makes you feel seen beyond the obvious stuff?"}, {"type": "ask", "q": "What kind of encouragement means the most to you?"}, {"type": "ask", "q": "What’s a way your partner has changed your life for the better?"}, {"type": "ask", "q": "What’s something about your partner that feels rare?"}, {"type": "ask", "q": "What’s one thing you respect deeply about your partner’s character?"}, {"type": "ask", "q": "What do you hope your partner never doubts about how you feel?"}, {"type": "quiz", "q": "What would your partner say is their favorite thing about you?"}, {"type": "quiz", "q": "What would your partner say is your most annoying habit?"}, {"type": "quiz", "q": "What would your partner say makes them feel most loved?"}, {"type": "quiz", "q": "What would your partner say their perfect date is?"}, {"type": "quiz", "q": "What would your partner say stresses them out the most?"}, {"type": "quiz", "q": "What would your partner say they appreciate most about you?"}, {"type": "quiz", "q": "What would your partner say is your best trait?"}, {"type": "quiz", "q": "What would your partner say is something you should do more often?"}, {"type": "quiz", "q": "What would your partner say their love language is right now?"}, {"type": "quiz", "q": "What would your partner say is your funniest habit?"}, {"type": "quiz", "q": "What would your partner say is the best way to comfort them?"}, {"type": "quiz", "q": "What would your partner say they want more of in the relationship?"}, {"type": "quiz", "q": "What would your partner say they admire most about you?"}, {"type": "quiz", "q": "What would your partner say is their favorite shared memory with you?"}, {"type": "quiz", "q": "What would your partner say is one thing they never want to lose in this relationship?"}, {"type": "quiz", "q": "What would your partner say is a dream they want your help achieving?"}, {"type": "quiz", "q": "What would your partner say is one thing they wish you understood better?"}, {"type": "quiz", "q": "What would your partner say helps them feel appreciated?"}, {"type": "quiz", "q": "What would your partner say is the hardest part of being in a relationship sometimes?"}, {"type": "quiz", "q": "What would your partner say makes your relationship special?"}, {"type": "quiz", "q": "What would your partner say they need when they are stressed?"}, {"type": "quiz", "q": "What would your partner say helps them trust someone deeply?"}, {"type": "quiz", "q": "What would your partner say is a small change that would improve the relationship?"}, {"type": "quiz", "q": "What would your partner say is one thing they are proud of in your relationship?"}, {"type": "quiz", "q": "What would your partner say they appreciate that you do consistently?"}, {"type": "quiz", "q": "What would your partner say their ideal weekend with you looks like?"}, {"type": "quiz", "q": "What would your partner say they secretly wish you noticed more often?"}, {"type": "quiz", "q": "What would your partner say is your most lovable trait?"}, {"type": "quiz", "q": "What would your partner say is your most attractive quality?"}, {"type": "quiz", "q": "What would your partner say they want your future together to feel like?"}, {"type": "quiz", "q": "What would your partner say is their favorite way to spend quality time with you?"}, {"type": "quiz", "q": "What would your partner say makes them feel emotionally safe?"}, {"type": "quiz", "q": "What would your partner say helps them reconnect after conflict?"}, {"type": "quiz", "q": "What would your partner say makes them feel desired?"}, {"type": "quiz", "q": "What would your partner say is one thing you do that always makes them smile?"}, {"type": "quiz", "q": "What would your partner say is their favorite kind of affection from you?"}, {"type": "quiz", "q": "What would your partner say they need more reassurance about?"}, {"type": "quiz", "q": "What would your partner say they respect most about you?"}, {"type": "quiz", "q": "What would your partner say is one of your habits they secretly find cute?"}, {"type": "quiz", "q": "What would your partner say they hope never changes about your relationship?"}, {"type": "quiz", "q": "What would your partner say is something they want to try together this year?"}, {"type": "quiz", "q": "What would your partner say you do best as a partner?"}, {"type": "quiz", "q": "What would your partner say is their favorite thing about everyday life with you?"}, {"type": "quiz", "q": "What would your partner say is one thing you do that helps them feel secure?"}, {"type": "quiz", "q": "What would your partner say they need most during a disagreement?"}, {"type": "quiz", "q": "What would your partner say is one way you could support them better right now?"}, {"type": "quiz", "q": "What would your partner say is their favorite physical feature of yours?"}, {"type": "quiz", "q": "What would your partner say is your most calming quality?"}, {"type": "quiz", "q": "What would your partner say makes them laugh every time?"}, {"type": "quiz", "q": "What would your partner say is the most romantic thing you do?"}, {"type": "quiz", "q": "What would your partner say is something about them that feels rare?"}, {"type": "quiz", "q": "What would your partner say ordinary life is better because of with you?"}, {"type": "quiz", "q": "What would your partner say they most want you to remember from a conversation like this?"}, {"type": "quiz", "q": "What would your partner say deserves more praise about them?"}, {"type": "quiz", "q": "What would your partner say is one thing they still find exciting about you?"}, {"type": "quiz", "q": "What would your partner say makes them think, this is my person?"}, {"type": "quiz", "q": "What would your partner say you taught them?"}, {"type": "quiz", "q": "What would your partner say is a subtle thing they appreciate about you?"}, {"type": "quiz", "q": "What would your partner say gives them peace in this relationship?"}, {"type": "quiz", "q": "What would your partner say makes the relationship worth protecting?"}, {"type": "quiz", "q": "What would your partner say people feel when they are around you two?"}];
+    const STORAGE_KEY = "couples-card-game-v3";
+
+    const setupScreen = document.getElementById("setupScreen");
+    const gameScreen = document.getElementById("gameScreen");
+    const cardEl = document.getElementById("card");
+    const name1Input = document.getElementById("name1");
+    const name2Input = document.getElementById("name2");
+    const typePill = document.getElementById("typePill");
+    const turnPill = document.getElementById("turnPill");
+    const completedPill = document.getElementById("completedPill");
+    const clarifier = document.getElementById("clarifier");
+    const questionText = document.getElementById("questionText");
+    const settingsOverlay = document.getElementById("settingsOverlay");
+    const settingsBtn = document.getElementById("settingsBtn");
+    const saveNamesBtn = document.getElementById("saveNamesBtn");
+    const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const settingsName1 = document.getElementById("settingsName1");
+    const settingsName2 = document.getElementById("settingsName2");
+
+    let state = { names:["Person 1","Person 2"], deck:[], completed:[], currentIndex:0 };
+
+    function shuffle(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function makeFreshDeck() { return shuffle(MASTER_CARDS).map(card => ({ ...card })); }
+    function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !Array.isArray(parsed.names) || !Array.isArray(parsed.deck) || !Array.isArray(parsed.completed)) return false;
+        state = { names:[parsed.names[0] || "Person 1", parsed.names[1] || "Person 2"], deck:parsed.deck, completed:parsed.completed, currentIndex:Number.isInteger(parsed.currentIndex) ? parsed.currentIndex : 0 };
+        if (state.currentIndex < 0) state.currentIndex = 0;
+        return true;
+      } catch (err) { return false; }
+    }
+
+    function resetState() {
+      state = { names:["Person 1","Person 2"], deck:[], completed:[], currentIndex:0 };
+      localStorage.removeItem(STORAGE_KEY);
+    }
+
+    function ensureDeckAvailable() {
+      const deckIndex = state.currentIndex - state.completed.length;
+      if (deckIndex < state.deck.length && state.deck[deckIndex]) return;
+      const remainingDeck = state.deck.slice(deckIndex).filter(Boolean);
+      const completedKeys = new Set(state.completed.map(card => card.q + "::" + card.type));
+      const remainingKeys = new Set(remainingDeck.map(card => card.q + "::" + card.type));
+      let fresh = makeFreshDeck().filter(card => {
+        const key = card.q + "::" + card.type;
+        return !completedKeys.has(key) && !remainingKeys.has(key);
+      });
+      if (fresh.length === 0) fresh = makeFreshDeck();
+      state.deck = remainingDeck.concat(fresh);
+    }
+
+    function getActiveCard() {
+      if (state.currentIndex < state.completed.length) return { ...state.completed[state.currentIndex], completedCard:true };
+      ensureDeckAvailable();
+      const deckIndex = state.currentIndex - state.completed.length;
+      const card = state.deck[deckIndex];
+      if (!card) return null;
+      return { ...card, answererIndex: state.currentIndex % 2, completedCard:false };
+    }
+
+    function animateCard(direction) {
+      const x = direction === "next" ? 16 : -16;
+      cardEl.style.transform = `translateX(${x}px) rotate(${x / 6}deg) scale(0.985)`;
+      cardEl.style.boxShadow = "0 12px 28px rgba(99,40,60,0.10)";
+      setTimeout(() => { cardEl.style.transform = ""; cardEl.style.boxShadow = ""; }, 170);
+    }
+
+    function escapeHtml(value) {
+      return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+    }
+
+    function render() {
+      const active = getActiveCard();
+      if (!active) return;
+      const answererName = state.names[active.answererIndex];
+      const partnerName = state.names[active.answererIndex === 0 ? 1 : 0];
+
+      if (active.type === "quiz") {
+        typePill.textContent = "Pop Quiz";
+        typePill.className = "pill quiz";
+        clarifier.innerHTML = `It is <strong>${escapeHtml(answererName)}</strong>'s turn to answer. This is a pop quiz card, so ${escapeHtml(answererName)} should answer what they think <strong>${escapeHtml(partnerName)}</strong> would say.`;
+      } else {
+        typePill.textContent = "Ask Question";
+        typePill.className = "pill ask";
+        clarifier.innerHTML = `It is <strong>${escapeHtml(answererName)}</strong>'s turn to answer. This is a regular question card, so ${escapeHtml(answererName)} answers for themselves.`;
+      }
+
+      turnPill.textContent = `${answererName} is answering`;
+      questionText.textContent = active.q;
+      completedPill.style.display = active.completedCard ? "inline-flex" : "none";
+      saveState();
+    }
+
+    function startGame() {
+      state.names = [name1Input.value.trim() || "Person 1", name2Input.value.trim() || "Person 2"];
+      state.deck = makeFreshDeck();
+      state.completed = [];
+      state.currentIndex = 0;
+      setupScreen.classList.remove("active");
+      gameScreen.classList.add("active");
+      render();
+    }
+
+    function goNext() {
+      const active = getActiveCard();
+      if (!active) return;
+      if (state.currentIndex === state.completed.length) {
+        state.completed.push({ q: active.q, type: active.type, answererIndex: active.answererIndex });
+      }
+      state.currentIndex += 1;
+      ensureDeckAvailable();
+      animateCard("next");
+      render();
+    }
+
+    function goPrev() {
+      if (state.currentIndex === 0) return;
+      state.currentIndex -= 1;
+      animateCard("prev");
+      render();
+    }
+
+    function speakCurrentCard() {
+      const active = getActiveCard();
+      if (!active || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const answererName = state.names[active.answererIndex];
+      const partnerName = state.names[active.answererIndex === 0 ? 1 : 0];
+      const text = active.type === "quiz"
+        ? `${answererName} is answering. Pop quiz. Answer what you think ${partnerName} would say. ${active.q}`
+        : `${answererName} is answering. Regular question. ${active.q}`;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 0.98;
+      utter.pitch = 1;
+      window.speechSynthesis.speak(utter);
+    }
+
+    function openSettings() {
+      settingsName1.value = state.names[0];
+      settingsName2.value = state.names[1];
+      settingsOverlay.classList.add("open");
+    }
+
+    function closeSettings() { settingsOverlay.classList.remove("open"); }
+
+    function saveNames() {
+      state.names = [settingsName1.value.trim() || "Person 1", settingsName2.value.trim() || "Person 2"];
+      name1Input.value = state.names[0];
+      name2Input.value = state.names[1];
+      closeSettings();
+      render();
+    }
+
+    function blankSlateReset() {
+      if (!confirm("Reset the app completely and clear all progress?")) return;
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      resetState();
+      name1Input.value = "";
+      name2Input.value = "";
+      settingsName1.value = "";
+      settingsName2.value = "";
+      gameScreen.classList.remove("active");
+      setupScreen.classList.add("active");
+      closeSettings();
+    }
+
+    document.getElementById("startBtn").addEventListener("click", startGame);
+    document.getElementById("doneBtn").addEventListener("click", goNext);
+    document.getElementById("speakBtn").addEventListener("click", speakCurrentCard);
+    settingsBtn.addEventListener("click", openSettings);
+    saveNamesBtn.addEventListener("click", saveNames);
+    closeSettingsBtn.addEventListener("click", closeSettings);
+    resetBtn.addEventListener("click", blankSlateReset);
+    settingsOverlay.addEventListener("click", (e) => { if (e.target === settingsOverlay) closeSettings(); });
+
+    document.addEventListener("keydown", (e) => {
+      if (!gameScreen.classList.contains("active")) return;
+      if (e.key === "ArrowRight") goNext();
+      if (e.key === "ArrowLeft") goPrev();
+    });
+
+    let startX = 0, startY = 0;
+    cardEl.addEventListener("touchstart", (e) => {
+      const t = e.changedTouches[0];
+      startX = t.clientX;
+      startY = t.clientY;
+    }, { passive:true });
+
+    cardEl.addEventListener("touchend", (e) => {
+      const t = e.changedTouches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy)) return;
+      if (dx > 0) goNext(); else goPrev();
+    }, { passive:true });
+
+    (function init() {
+      const hasSaved = loadState();
+      if (hasSaved && (state.completed.length || state.deck.length)) {
+        name1Input.value = state.names[0];
+        name2Input.value = state.names[1];
+        setupScreen.classList.remove("active");
+        gameScreen.classList.add("active");
+        render();
+      } else {
+        resetState();
+      }
+    })();
+  </script>
+</body>
+</html>
